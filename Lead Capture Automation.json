@@ -1,0 +1,603 @@
+{
+  "name": "Lead Capture Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "documentId": {
+          "__rl": true,
+          "value": "1G57vuOdbEcdrm5Lkt3w2suqB1gLCKodOOFa7Yrvj_PY",
+          "mode": "list",
+          "cachedResultName": "Lead Capture Automation",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1G57vuOdbEcdrm5Lkt3w2suqB1gLCKodOOFa7Yrvj_PY/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 729087466,
+          "mode": "list",
+          "cachedResultName": "Form Responses 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1G57vuOdbEcdrm5Lkt3w2suqB1gLCKodOOFa7Yrvj_PY/edit#gid=729087466"
+        },
+        "event": "rowAdded",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "a9512908-3fff-4565-8c96-58123e430cc6",
+      "name": "Google Sheets Trigger",
+      "credentials": {
+        "googleSheetsTriggerOAuth2Api": {
+          "id": "yKybcIVpj6w2MD5n",
+          "name": "Google Sheets Trigger account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "85cba099-b98c-4a29-8d5a-f46c710fee6f",
+              "name": "name",
+              "value": "={{ $json['Full Name'] }}",
+              "type": "string"
+            },
+            {
+              "id": "359600df-d914-435e-9c9f-9e60b4026b91",
+              "name": "email",
+              "value": "={{ $json['Email Address'] }}",
+              "type": "string"
+            },
+            {
+              "id": "ad5705f8-ac48-4052-b6e6-5703396f3814",
+              "name": "interest",
+              "value": "={{ $json['What are you interested in? '] }}",
+              "type": "string"
+            },
+            {
+              "id": "4024a74a-207a-4605-8500-b757b023941f",
+              "name": "description",
+              "value": "={{ $json['  Tell us more about your needs  '] }}",
+              "type": "string"
+            },
+            {
+              "id": "aca62dd3-0961-493d-8693-127680bc0a74",
+              "name": "budget",
+              "value": "={{ $json['  Budget Range (optional)  '] }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "include": "except",
+        "excludeFields": "['Full Name'], ['Email Address'], ['What are you interested in? '], ['  Tell us more about your needs  '], ['  Budget Range (optional)  ']",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        208,
+        0
+      ],
+      "id": "d405c709-b12d-46d4-b8a3-a6a7b1fcffeb",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ==============================\n// Step 1: Get the OpenAI output text\n// Assumes your OpenAI node returns the output at:\n// $input.first().json.output[0].content[0].text\n// ==============================\nconst outputText = $input.first().json.output[0].content[0].text;\n\n// ==============================\n// Step 2: Parse OpenAI JSON safely\n// ==============================\nlet parsed = {};\ntry {\n    parsed = JSON.parse(outputText);\n} catch (error) {\n    throw new Error(\"Failed to parse OpenAI output as JSON: \" + error);\n}\n\n// ==============================\n// Step 3: Return the parsed lead fields\n// This aligns with the new combined prompt format:\n// - name, email, phone, company\n// - interest, budget\n// - score, intent, summary\n// ==============================\nreturn [\n    {\n        json: {\n            name: parsed.name || \"Not Specified\",\n            email: parsed.email || \"Not Specified\",\n            phone: parsed.phone || \"Not Specified\",\n            company: parsed.company || \"Not Specified\",\n            interest: parsed.interest || \"Not Specified\",\n            budget: parsed.budget || \"Not Specified\",\n            score: parsed.score,\n            intent: parsed.intent,\n            summary: parsed.summary\n        }\n    }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        768,
+        0
+      ],
+      "id": "3f5804ad-2bcd-446b-bdca-368c24ecb968",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "d4bacdce-237b-41db-b417-07ba17047984",
+              "leftValue": "={{ $json.score }}",
+              "rightValue": 80,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        960,
+        -160
+      ],
+      "id": "8ed10d2d-b18c-4356-82a6-1bfe46272c22",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "4e435c40-5cff-4e68-81d3-7cb7eaa3ebc4",
+              "leftValue": "={{ $json.score }}",
+              "rightValue": 40,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            },
+            {
+              "id": "723e6805-a355-442d-b64d-5a4faf59c5a2",
+              "leftValue": "={{ $json.score }}",
+              "rightValue": 79,
+              "operator": {
+                "type": "number",
+                "operation": "lte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        960,
+        0
+      ],
+      "id": "2c9de0fa-49d3-41b5-989e-591a7f66ff4d",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C0AE9UETKCJ",
+          "mode": "list",
+          "cachedResultName": "sales-hot"
+        },
+        "text": "=🚨 *Hot Lead Alert* \n\n*Name:* {{ $json.name }}\n*Email:* {{ $json.email }}\n*Phone:* {{ $json.phone }}\n*Company:* {{ $json.company }}\n*Interest:* {{ $json.interest }}\n*Budget:* {{ $json.budget }}\n*Score:* {{ $json.score }} \n*Intent:* {{ $json.intent }} \n*Summary:* {{ $json.summary }}  \n\n⚡ Assign to sales immediately!",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.4,
+      "position": [
+        1168,
+        -160
+      ],
+      "id": "fdc6baea-6e41-4ecc-be06-d7bdbae95836",
+      "name": "Send a message",
+      "webhookId": "d0deda30-021a-4a04-be08-1956ee9f1b34",
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "Y0wrGLU8Zhw9Fcan",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C0AF47HR2SC",
+          "mode": "list",
+          "cachedResultName": "sales-warm"
+        },
+        "text": "=🌟 *Warm Lead Notification*\n\n*Name:* {{ $json.name }}\n*Email:* {{ $json.email }}\n*Phone:* {{ $json.phone }}\n*Company:* {{ $json.company }}\n*Interest:* {{ $json.interest }}\n*Budget:* {{ $json.budget }}\n*Score:* {{ $json.score }} \n*Intent:* {{ $json.intent }} \n*Summary:* {{ $json.summary }}  \n\n💡 Follow up when convenient.",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.4,
+      "position": [
+        1168,
+        0
+      ],
+      "id": "7bf10958-374e-4f13-ab88-0d17e6e9a103",
+      "name": "Send a message1",
+      "webhookId": "b36f818d-8dfd-4c98-b51e-5e929f604474",
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "Y0wrGLU8Zhw9Fcan",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C0AE6G00G3F",
+          "mode": "list",
+          "cachedResultName": "sales-cold"
+        },
+        "text": "=❄ *Cold Lead Logged*\n\n*Name:* {{ $json.name }}\n*Email:* {{ $json.email }}\n*Phone:* {{ $json.phone }}\n*Company:* {{ $json.company }}\n*Interest:* {{ $json.interest }}\n*Budget:* {{ $json.budget }}\n*Score:* {{ $json.score }} \n*Intent:* {{ $json.intent }} \n*Summary:* {{ $json.summary }}  \n\n📝 Logged for record-keeping.",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.4,
+      "position": [
+        1168,
+        144
+      ],
+      "id": "c170716c-d700-4bfd-b1ec-40e6b060470e",
+      "name": "Send a message2",
+      "webhookId": "61a801d8-6bd8-4215-9fcd-bc2609695706",
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "Y0wrGLU8Zhw9Fcan",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "simple": false,
+        "filters": {
+          "q": "subject:inquiry OR pricing OR services"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        0,
+        176
+      ],
+      "id": "7cc73561-e8f9-479a-98da-f9b762a92a06",
+      "name": "Gmail Trigger",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "qxWJFmyL2TcJfzCP",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4.1-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4.1-MINI"
+        },
+        "responses": {
+          "values": [
+            {
+              "content": "=You are a corporate sales lead analyzer.\n\nAnalyze the following customer inquiry. The lead may come from a Google Form (via Sheets) or a Gmail email.\n\n- Form Fields (may or may not exist):\n    - Name: {{ $json.name || \"Not Specified\"}}\n    - Email: {{ $json.email || \"Not Specified\"}}\n    - Phone: {{ $json['Phone Number'] || \"Not Specified\"}}\n    - Company: {{ $json['Company Name'] || \"Not Specified\" }}\n    - Interest: {{ $json.interest || \"Not Specified\"}}\n    - Description: {{ $json.description || \"Not Specified\"}}\n    - Budget: {{ $json.budget || \"Not Specified\"}}\n\n- Email Fields (may or may not exist):\n    - Email Subject: {{ $json.subject ? $json.subject : null }}\n    - Email Body: {{ $json.bodyText ? $json.bodyText : null }}\n    - Sender Email: {{ $json.senderEmail || null }}\n\nInstructions:\n1. If form fields exist, use them.\n2. If form fields are missing, actively extract the following from the email subject and body:\n    - Name: sender's name\n    - Email: sender's email address\n    - Phone: any phone number mentioned\n    - Company: company mentioned\n    - Interest: main service, product, or topic requested\n    - Budget: numeric value mentioned (e.g., ₱50,000, $2000)\n3. Assign a lead score from 1 to 100 using this weighted system:\n   - Clarity of request (25 pts)\n   - Budget mentioned (20 pts)\n   - Urgency / timeline (20 pts)\n   - Buying intent / commitment (20 pts)\n   - Completeness of information (15 pts)\n4. Classify the lead intent as:\n   - hot (score 80–100)\n   - warm (score 40–79)\n   - cold (score 1–39)\n\nRules:\n- Always return numeric score (do NOT use words)\n- Always return JSON only (no extra text or markdown)\n- If any field cannot be found, use \"Not Specified\" for strings\n\nReturn JSON exactly in this format:\n{\n  \"name\": \"extracted name or 'Not Specified'\",\n  \"email\": \"extracted email or 'Not Specified'\",\n  \"phone\": \"extracted phone or 'Not Specified'\",\n  \"company\": \"extracted company or 'Not Specified'\",\n  \"interest\": \"extracted interest or 'Not Specified'\",\n  \"budget\": \"extracted budget or 'Not Specified'\",\n  \"score\": number,\n  \"intent\": \"hot | warm | cold\",\n  \"summary\": \"short summary of the customer's request\"\n}\n"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.1,
+      "position": [
+        416,
+        0
+      ],
+      "id": "2f9267a2-97a9-46fc-9a22-d414506674cb",
+      "name": "Message a model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "eOwF2Fr69DHrJA27",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "ba5e0faa-7fb5-4515-b30d-4375226af807",
+              "leftValue": "={{ $json.score }}",
+              "rightValue": 39,
+              "operator": {
+                "type": "number",
+                "operation": "lte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        960,
+        144
+      ],
+      "id": "54b260e0-2bb6-4b82-b3b7-0f727d0c3ec8",
+      "name": "If2"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ==============================\n// Step 1: Grab the email HTML\n// ==============================\nlet emailBody = $input.first().json.textAsHtml || \"\";\n\n// ==============================\n// Step 2: Clean HTML into plain text\n// ==============================\nemailBody = emailBody.replace(/<br\\s*\\/?>/gi, \"\\n\"); // convert <br> to new lines\nemailBody = emailBody.replace(/<[^>]+>/g, \"\");        // remove other tags\nemailBody = emailBody.replace(/&nbsp;/g, \" \");\nemailBody = emailBody.replace(/&amp;/g, \"&\");\nemailBody = emailBody.replace(/&lt;/g, \"<\");\nemailBody = emailBody.replace(/&gt;/g, \">\");\nemailBody = emailBody.replace(/&quot;/g, '\"');\nemailBody = emailBody.replace(/&rsquo;/g, \"'\");\nemailBody = emailBody.replace(/&#39;/g, \"'\");\n\n// Trim extra spaces\nemailBody = emailBody.replace(/\\s+\\n/g, \"\\n\").trim();\n\n// ==============================\n// Step 3: Get sender email\n// ==============================\nlet senderEmail = \"Not Specified\";\nif ($input.first().json.from && $input.first().json.from.value && $input.first().json.from.value.length > 0) {\n    senderEmail = $input.first().json.from.value[0].address || \"Not Specified\";\n}\n\n// ==============================\n// Step 4: Return the cleaned email info\n// ==============================\nreturn [\n    {\n        json: {\n            subject: $json.subject || \"Not Specified\",\n            bodyText: emailBody,\n            senderEmail: senderEmail\n        }\n    }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        208,
+        176
+      ],
+      "id": "9cc3dd99-d51e-474b-a783-5a5ada7906fa",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "content": "Triggers:\n- Google Sheets connected to Google Forms. Once the Sheets is updated, the trigger starts.\n- Gmail trigger starts when a new email is detected"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -288,
+        48
+      ],
+      "typeVersion": 1,
+      "id": "515a81e3-51a7-4b28-b6e4-3ce4d42b6de3",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "Function Node:\n- Extracts the Email subject, body, and sender email for analyzation",
+        "height": 96
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        144,
+        320
+      ],
+      "typeVersion": 1,
+      "id": "8db13da9-012e-480a-a457-3b41b9eafc40",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "Set Fields Node:\n- Rename variables for readability",
+        "height": 80
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        144,
+        -96
+      ],
+      "typeVersion": 1,
+      "id": "84a6476a-a340-46ab-a4e2-76305ceae6ca",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "OpenAI node:\n- Analyzes data coming from both Gmail and Google Sheets. Created a prompt that can handle and analyze both formats and output it into one JSON format\n- Adds scores based on the data for potential leads",
+        "height": 192
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        416,
+        128
+      ],
+      "typeVersion": 1,
+      "id": "6fccd765-09ba-4d98-8232-51e7feae9cf3",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "content": "Function Node:\n- Converts the OpenAI output text to JSON so I can access it easily.",
+        "height": 96
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        656,
+        -112
+      ],
+      "typeVersion": 1,
+      "id": "52713619-74eb-4807-aa0f-07b64a72de6d",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "content": "If Nodes:\n- If score > 80\n- If score >= 40 AND score <= 79\n- If score <= 39 ",
+        "height": 128
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        880,
+        -304
+      ],
+      "typeVersion": 1,
+      "id": "871e5576-3232-4d72-a79f-f2b0d93eb642",
+      "name": "Sticky Note5"
+    },
+    {
+      "parameters": {
+        "content": "Slack Nodes:\n- Sends the inquiries and lead data to the respective channels for immediate action",
+        "height": 128
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1376,
+        -32
+      ],
+      "typeVersion": 1,
+      "id": "45d3d2a8-2df7-436c-9bf6-d19d7d860e4c",
+      "name": "Sticky Note6"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Google Sheets Trigger": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Message a model1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "If2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Send a message1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model1": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If2": {
+      "main": [
+        [
+          {
+            "node": "Send a message2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "Message a model1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "1ce1c2ae-2187-410f-923e-8e694961c878",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "51da36e14d282f96fa99554d3a706283144cf5354a057d2d1220bf8f99d36355"
+  },
+  "id": "E4CFSotprVuuxMC3nE1nR",
+  "tags": []
+}
