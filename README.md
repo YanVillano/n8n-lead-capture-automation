@@ -1,4 +1,4 @@
-# Sales Lead Analyzer Automation
+# Sales Lead Capture Automation
 
 This workflow automatically analyzes incoming sales leads from **Google Forms (via Sheets)** and **Gmail**, scores them based on potential, and sends notifications to Slack channels for immediate action.
 
